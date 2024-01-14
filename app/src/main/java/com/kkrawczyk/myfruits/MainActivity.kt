@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kkrawczyk.myfruits.repository.DetailsActivity
 import com.kkrawczyk.myfruits.ui.theme.MyFruitsTheme
 
 class MainActivity : ComponentActivity() {
@@ -59,15 +61,24 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainView(viewModel)
+                    MainView(
+                        viewModel,
+                        onClick = { id -> navigateToDetails(id) }
+                    )
                 }
             }
         }
     }
+
+    private fun navigateToDetails(id: Number) {
+        val intent = Intent(this, DetailsActivity::class.java)
+        intent.putExtra("FRUIT_ID", "$id")
+        startActivity(intent)
+    }
 }
 
 @Composable
-fun MainView(viewModel: MainViewModel) {
+fun MainView(viewModel: MainViewModel, onClick: (Number) -> Unit) {
     val uiState by viewModel.immutableFruitsData.observeAsState(MainViewModel.UiState())
 
     when {
@@ -80,7 +91,7 @@ fun MainView(viewModel: MainViewModel) {
         }
 
         uiState.data != null -> {
-            uiState.data?.let { MyListView(fruits = it) }
+            uiState.data?.let { MyListView(fruits = it, onClick = { id -> onClick.invoke(id) }) }
         }
     }
 }
@@ -128,15 +139,15 @@ fun MyLoadingView() {
 }
 
 @Composable
-fun MyListView(fruits: List<Fruit>) {
-    FruitList(fruits)
+fun MyListView(fruits: List<Fruit>, onClick: (Number) -> Unit) {
+    FruitList(fruits, onClick = { id -> onClick.invoke(id) })
 }
 
 @Composable
-fun FruitList(fruits: List<Fruit>, modifier: Modifier = Modifier) {
+fun FruitList(fruits: List<Fruit>, modifier: Modifier = Modifier, onClick: (Number) -> Unit) {
     LazyColumn {
         items(fruits) { fruit ->
-            FruitListItem(fruit = fruit)
+            FruitListItem(fruit = fruit, onClick = { id -> onClick.invoke(id) })
         }
     }
 }
@@ -154,7 +165,7 @@ fun getRandomImageResource(): Int {
 
 
 @Composable
-fun FruitListItem(fruit: Fruit) {
+fun FruitListItem(fruit: Fruit, onClick: (Number) -> Unit) {
     val randomImageResource = getRandomImageResource()
 
     Box(modifier = Modifier.padding(all = 16.dp)) {
@@ -232,7 +243,7 @@ fun FruitListItem(fruit: Fruit) {
                 Row {
 
                     OutlinedButton(
-                        onClick = { /*TODO*/ }, modifier = Modifier
+                        onClick = { onClick.invoke(fruit.id) }, modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
                     ) {
